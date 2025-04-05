@@ -1,0 +1,80 @@
+/* Gameboy-style controls */
+.gameboy-container {
+  background-color: rebeccapurple;
+  padding: 30px;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.controls-container {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.d-pad {
+  display: grid;
+  grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  gap: 5px;
+  width: 120px;
+  height: 120px;
+}
+
+.d-pad button {
+  background-color: #000000;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-size: 1.2em;
+  padding: 0;
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.1s;
+}
+
+.d-pad button:hover {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.d-pad button:active {
+  transform: scale(0.95);
+}
+
+.d-pad .up {
+  grid-area: 1 / 2;
+}
+
+.d-pad .left {
+  grid-area: 2 / 1;
+}
+
+.d-pad .right {
+  grid-area: 2 / 3;
+}
+
+.d-pad .down {
+  grid-area: 3 / 2;
+}
+
+.difficulty-container {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.menu-buttons button {
+  width: 120px;
+}
