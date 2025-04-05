@@ -5,13 +5,34 @@ const gridSize = 22;
 const tileCount = 15;
 let snake = [{x: 10, y: 10, visualX: 10, visualY: 10}];
 let direction = {x: 0, y: 0};
-let food = {x: Math.floor(Math.random() * tileCount), y: Math.floor(Math.random() * tileCount)};
+let foods = [];
 let score = 0;
 let baseGameSpeed = 125;
 let gameRunning = false;
 let imagesLoaded = false;
 let gameStarted = false;
 let walls = [];
+
+function generateFood() {
+  let newFood;
+  do {
+    newFood = {
+      x: Math.floor(Math.random() * tileCount),
+      y: Math.floor(Math.random() * tileCount)
+    };
+  } while (
+    snake.some(segment => segment.x === newFood.x && segment.y === newFood.y) ||
+    walls.some(wall => {
+      if (wall.isVertical) {
+        return newFood.x === wall.x && newFood.y >= wall.y && newFood.y < wall.y + wall.length;
+      } else {
+        return newFood.y === wall.y && newFood.x >= wall.x && newFood.x < wall.x + wall.length;
+      }
+    }) ||
+    foods.some(food => food.x === newFood.x && food.y === newFood.y)
+  );
+  return newFood;
+}
 
 function gameLoop() {
   if (!gameRunning) return;
@@ -46,7 +67,7 @@ function isWallOverlapping(newWall) {
     if (Math.abs(newWall.x - segment.x) < SAFE_DISTANCE && Math.abs(newWall.y - segment.y) < SAFE_DISTANCE) return true;
   }
   
-  if (Math.abs(newWall.x - food.x) < SAFE_DISTANCE && Math.abs(newWall.y - food.y) < SAFE_DISTANCE) return true;
+  if (foods.some(food => Math.abs(newWall.x - food.x) < SAFE_DISTANCE && Math.abs(newWall.y - food.y) < SAFE_DISTANCE)) return true;
   
   return walls.some(wall => {
     if (newWall.isVertical === wall.isVertical) {
@@ -105,26 +126,15 @@ function update() {
     }
   });
 
-  if (head.x === food.x && head.y === food.y) {
+  const foodIndex = foods.findIndex(food => head.x === food.x && head.y === food.y);
+  if (foodIndex !== -1) {
     score++;
     document.getElementById('scoreValue').textContent = score;
-    let newFood;
-    do {
-      newFood = {
-        x: Math.floor(Math.random() * tileCount),
-        y: Math.floor(Math.random() * tileCount)
-      };
-    } while (
-      snake.some(segment => segment.x === newFood.x && segment.y === newFood.y) ||
-      walls.some(wall => {
-        if (wall.isVertical) {
-          return newFood.x === wall.x && newFood.y >= wall.y && newFood.y < wall.y + wall.length;
-        } else {
-          return newFood.y === wall.y && newFood.x >= wall.x && newFood.x < wall.x + wall.length;
-        }
-      })
-    );
-    food = newFood;
+    foods.splice(foodIndex, 1);
+    foods.push(generateFood());
+    if (document.getElementById('difficulty').value === 'easy' && foods.length < 2) {
+      foods.push(generateFood());
+    }
   } else {
     snake.pop();
   }
@@ -209,14 +219,16 @@ function draw() {
     ctx.restore();
   });
 
-  ctx.drawImage(foodImage, food.x * gridSize, food.y * gridSize, gridSize, gridSize);
+  foods.forEach(food => {
+    ctx.drawImage(foodImage, food.x * gridSize, food.y * gridSize, gridSize, gridSize);
+  });
 }
 
 function gameOver() {
   gameRunning = false;
   startButton.disabled = false;
   pauseButton.disabled = true;
-  document.getElementById('scoreValue').textContent = `${score} (Game Over!)`;
+  document.getElementById('scoreValue').textContent = `${score} (💀)`;
 }
 
 const startButton = document.getElementById('startButton');
@@ -228,13 +240,13 @@ function updateGameSpeed() {
   const difficulty = document.getElementById('difficulty').value;
   switch (difficulty) {
     case 'easy':
-      gameSpeed = baseGameSpeed * 1.2;
+      gameSpeed = baseGameSpeed * 1.3;
       break;
     case 'hard':
       gameSpeed = baseGameSpeed * 0.95;
       break;
     default:
-      gameSpeed = baseGameSpeed;
+      gameSpeed = baseGameSpeed * 1.05;
   }
   generateWalls();
 }
@@ -251,6 +263,11 @@ startButton.addEventListener('click', () => {
   gameStarted = false;
   updateGameSpeed();
   generateWalls();
+  foods = [];
+  foods.push(generateFood());
+  if (document.getElementById('difficulty').value === 'easy') {
+    foods.push(generateFood());
+  }
   document.getElementById('scoreValue').textContent = score;
   gameRunning = true;
   startButton.disabled = true;
@@ -259,10 +276,11 @@ startButton.addEventListener('click', () => {
 });
 
 pauseButton.addEventListener('click', () => {
-  if (!gameRunning) return;
   gameRunning = !gameRunning;
   pauseButton.textContent = gameRunning ? 'Pause' : 'Resume';
-  if (gameRunning) gameLoop();
+  if (gameRunning) {
+    gameLoop();
+  }
 });
 
 startButton.disabled = true;
